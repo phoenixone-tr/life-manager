@@ -110,13 +110,39 @@ def test_classify_server_alert():
     assert data["priority"] == "high"
 
 
-def test_classify_missing_required_fields():
-    """Test validation error when required fields are missing."""
+def test_classify_minimal_fields():
+    """Test that classification works with minimal input (all fields have defaults)."""
     response = client.post(
         "/api/v1/email/classify",
         json={
             "subject": "Test",
         },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "category" in data
+
+
+def test_classify_empty_received_at():
+    """Test that empty string received_at is handled gracefully."""
+    response = client.post(
+        "/api/v1/email/classify",
+        json={
+            "from_address": "test@test.de",
+            "subject": "Test",
+            "received_at": "",
+            "account": "business",
+            "message_id": "test-123",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_classify_invalid_body():
+    """Test validation error with completely invalid input."""
+    response = client.post(
+        "/api/v1/email/classify",
+        json="not a json object",
     )
     assert response.status_code == 422
 

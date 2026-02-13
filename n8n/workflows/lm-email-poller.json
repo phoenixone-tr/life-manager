@@ -70,7 +70,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://lm-api:8000/api/v1/email/classify",
+        "url": "http://10.10.10.211:8000/api/v1/email/classify",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ from_address: $json.from?.emailAddress?.address || $json.sender?.emailAddress?.address || '', from_name: $json.from?.emailAddress?.name || $json.sender?.emailAddress?.name || '', subject: $json.subject || '', body_preview: $json.bodyPreview || '', received_at: $json.receivedDateTime || '', has_attachments: $json.hasAttachments || false, importance: ($json.importance || 'normal').toLowerCase(), account: $json.account || 'business', message_id: $json.id || '' }) }}",
