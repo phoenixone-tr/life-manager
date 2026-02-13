@@ -119,7 +119,7 @@
             {
               "id": "telegram-msg",
               "name": "telegram_message",
-              "value": "={{ (() => {\n  const priorityEmoji = { high: '🔴', medium: '🟡', low: '⚪' };\n  const categoryLabels = {\n    server_alert: 'Server Alert',\n    invoice: 'Rechnung',\n    client_inquiry: 'Kundenanfrage',\n    newsletter: 'Newsletter',\n    personal: 'Persönlich',\n    spam_suspect: 'Spam-Verdacht',\n    uncategorized: 'Unkategorisiert'\n  };\n  const account = $('🏢 Set Account: Business').isConnected ? 'Business' : 'Family';\n  const accountLabel = $json.account === 'business' ? 'Business' : 'Family';\n  const emoji = priorityEmoji[$json.priority] || '⚪';\n  const category = categoryLabels[$json.category] || $json.category;\n  const fromName = $('🤖 Classify Email').item.json.from_name || '';\n  const fromAddr = $('🤖 Classify Email').item.json.from_address || '';\n  const subject = $('🤖 Classify Email').item.json.subject || '';\n  const preview = $('🤖 Classify Email').item.json.body_preview || '';\n  const previewTruncated = preview.length > 200 ? preview.substring(0, 200) + '...' : preview;\n  \n  let msg = `📧 Neue Email (${accountLabel})\\n`;\n  msg += `Von: ${fromName} <${fromAddr}>\\n`;\n  msg += `Betreff: ${subject}\\n`;\n  msg += `Kategorie: ${emoji} ${category} (${$json.priority})\\n`;\n  msg += `---\\n`;\n  msg += previewTruncated;\n  return msg;\n})() }}",
+              "value": "={{ (() => {\n  const priorityEmoji = { high: '🔴', medium: '🟡', low: '⚪' };\n  const categoryLabels = {\n    server_alert: 'Server Alert',\n    invoice: 'Rechnung',\n    client_inquiry: 'Kundenanfrage',\n    newsletter: 'Newsletter',\n    personal: 'Persönlich',\n    spam_suspect: 'Spam-Verdacht',\n    uncategorized: 'Unkategorisiert'\n  };\n  const e = $json.email || {};\n  const accountLabel = (e.account || 'business') === 'business' ? 'Business' : 'Family';\n  const emoji = priorityEmoji[$json.priority] || '⚪';\n  const category = categoryLabels[$json.category] || $json.category;\n  const fromName = e.from_name || '';\n  const fromAddr = e.from_address || '';\n  const subject = e.subject || '';\n  const preview = e.body_preview || '';\n  const previewShort = preview.length > 200 ? preview.substring(0, 200) + '...' : preview;\n  const fromLine = fromName ? fromName + ' (' + fromAddr + ')' : fromAddr;\n  const lines = [];\n  lines.push('📧 Neue Email (' + accountLabel + ')');\n  lines.push('Von: ' + fromLine);\n  lines.push('Betreff: ' + subject);\n  lines.push('Kategorie: ' + emoji + ' ' + category + ' (' + $json.priority + ')');\n  lines.push('---');\n  lines.push(previewShort);\n  return lines.join('\\n');\n})() }}",
               "type": "string"
             }
           ]
@@ -135,9 +135,7 @@
       "parameters": {
         "chatId": "REPLACE_WITH_MARTIN_CHAT_ID",
         "text": "={{ $json.telegram_message }}",
-        "additionalFields": {
-          "parse_mode": "HTML"
-        }
+        "additionalFields": {}
       },
       "id": "send-telegram",
       "name": "📱 Send Telegram",

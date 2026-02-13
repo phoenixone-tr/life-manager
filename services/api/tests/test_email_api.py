@@ -29,6 +29,12 @@ def test_classify_endpoint():
     assert "tier_used" in data
     assert "reasoning" in data
     assert data["dry_run"] is False
+    # Verify email echo fields
+    assert "email" in data
+    assert data["email"]["from_address"] == "kunde@firma.de"
+    assert data["email"]["from_name"] == "Max Mustermann"
+    assert data["email"]["subject"] == "Angebot AI-Beratung"
+    assert data["email"]["account"] == "business"
 
 
 def test_test_classify_endpoint():

@@ -9,6 +9,7 @@ from app.models.email import (
     EmailClassifyResponse,
     EmailPriority,
     EmailRule,
+    EmailSummary,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ class EmailClassifier:
     ) -> EmailClassifyResponse:
         """Classify an email using Tier 1 rules."""
         rules = self._load_rules()
+        summary = self._make_email_summary(email)
 
         for rule in rules:
             match, reasoning = self._evaluate_rule(rule, email)
@@ -78,6 +80,7 @@ class EmailClassifier:
                     tier_used=1,
                     reasoning=reasoning,
                     dry_run=dry_run,
+                    email=summary,
                 )
 
         # No rule matched → uncategorized
@@ -89,6 +92,18 @@ class EmailClassifier:
             tier_used=1,
             reasoning="No classification rule matched",
             dry_run=dry_run,
+            email=summary,
+        )
+
+    @staticmethod
+    def _make_email_summary(email: EmailClassifyRequest) -> EmailSummary:
+        """Create an echo summary of the input email for the response."""
+        return EmailSummary(
+            from_address=email.from_address,
+            from_name=email.from_name,
+            subject=email.subject,
+            body_preview=email.body_preview,
+            account=email.account.value,
         )
 
     def _evaluate_rule(

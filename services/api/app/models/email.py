@@ -57,6 +57,16 @@ class EmailClassifyRequest(BaseModel):
         return v
 
 
+class EmailSummary(BaseModel):
+    """Echo of input email fields for downstream consumers (e.g. n8n Telegram formatting)."""
+
+    from_address: str = ""
+    from_name: str = ""
+    subject: str = ""
+    body_preview: str = ""
+    account: str = ""
+
+
 class EmailClassifyResponse(BaseModel):
     category: EmailCategory
     priority: EmailPriority
@@ -65,6 +75,7 @@ class EmailClassifyResponse(BaseModel):
     tier_used: int = Field(1, description="Classification tier (1=rules, 2=LLM)")
     reasoning: str = Field("", description="Why this classification was chosen")
     dry_run: bool = Field(False, description="Whether this was a test run")
+    email: EmailSummary = Field(default_factory=EmailSummary, description="Echo of input email fields")
 
 
 class EmailRule(BaseModel):

@@ -240,3 +240,20 @@ class TestEdgeCases:
         )
         result = c.classify(email)
         assert result.tier_used == 1
+
+    def test_response_includes_email_summary(self):
+        """Verify the response echoes back the input email fields."""
+        c = get_classifier()
+        email = _make_email(
+            from_address="kunde@firma.de",
+            from_name="Max Mustermann",
+            subject="Anfrage AI",
+            body_preview="Sehr geehrter Herr Müller",
+            account=EmailAccount.BUSINESS,
+        )
+        result = c.classify(email)
+        assert result.email.from_address == "kunde@firma.de"
+        assert result.email.from_name == "Max Mustermann"
+        assert result.email.subject == "Anfrage AI"
+        assert result.email.body_preview == "Sehr geehrter Herr Müller"
+        assert result.email.account == "business"
