@@ -23,6 +23,7 @@ env/
 # Environment variables
 .env
 .env.local
+.env.production
 
 # OS
 .DS_Store
@@ -35,3 +36,9 @@ htmlcov/
 
 # Logs
 *.log
+
+# Docker volumes (local mounts)
+docker-data/
+
+# Node
+node_modules/
