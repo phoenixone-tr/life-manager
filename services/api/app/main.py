@@ -1,7 +1,15 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import Settings
+from app.routers import email
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 app = FastAPI(title="Life Manager API", version="0.1.0")
 
@@ -15,6 +23,9 @@ if settings.ENVIRONMENT == "development":
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Register routers
+app.include_router(email.router)
 
 
 @app.get("/health")

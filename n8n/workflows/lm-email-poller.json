@@ -1,0 +1,243 @@
+{
+  "name": "LM - Email Poller",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-business",
+      "name": "📧 Business Email Trigger",
+      "type": "n8n-nodes-base.microsoftOutlookTrigger",
+      "typeVersion": 1,
+      "position": [200, 200],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "REPLACE_WITH_BUSINESS_CREDENTIAL_ID",
+          "name": "M365 Business Email"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "trigger-family",
+      "name": "📧 Family Email Trigger",
+      "type": "n8n-nodes-base.microsoftOutlookTrigger",
+      "typeVersion": 1,
+      "position": [200, 500],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "REPLACE_WITH_FAMILY_CREDENTIAL_ID",
+          "name": "M365 Family Email"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "account-tag",
+              "name": "account",
+              "value": "business",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-account-business",
+      "name": "🏢 Set Account: Business",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "account-tag",
+              "name": "account",
+              "value": "family",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-account-family",
+      "name": "👨‍👩‍👧 Set Account: Family",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://lm-api:8000/api/v1/email/classify",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from_address: $json.from?.emailAddress?.address || $json.sender?.emailAddress?.address || '', from_name: $json.from?.emailAddress?.name || $json.sender?.emailAddress?.name || '', subject: $json.subject || '', body_preview: $json.bodyPreview || '', received_at: $json.receivedDateTime || '', has_attachments: $json.hasAttachments || false, importance: ($json.importance || 'normal').toLowerCase(), account: $json.account || 'business', message_id: $json.id || '' }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "classify-email",
+      "name": "🤖 Classify Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 350]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-notify",
+              "leftValue": "={{ $json.actions }}",
+              "rightValue": "notify_telegram",
+              "operator": {
+                "type": "array",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-notify",
+      "name": "🔍 Should Notify?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [960, 350]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "telegram-msg",
+              "name": "telegram_message",
+              "value": "={{ (() => {\n  const priorityEmoji = { high: '🔴', medium: '🟡', low: '⚪' };\n  const categoryLabels = {\n    server_alert: 'Server Alert',\n    invoice: 'Rechnung',\n    client_inquiry: 'Kundenanfrage',\n    newsletter: 'Newsletter',\n    personal: 'Persönlich',\n    spam_suspect: 'Spam-Verdacht',\n    uncategorized: 'Unkategorisiert'\n  };\n  const account = $('🏢 Set Account: Business').isConnected ? 'Business' : 'Family';\n  const accountLabel = $json.account === 'business' ? 'Business' : 'Family';\n  const emoji = priorityEmoji[$json.priority] || '⚪';\n  const category = categoryLabels[$json.category] || $json.category;\n  const fromName = $('🤖 Classify Email').item.json.from_name || '';\n  const fromAddr = $('🤖 Classify Email').item.json.from_address || '';\n  const subject = $('🤖 Classify Email').item.json.subject || '';\n  const preview = $('🤖 Classify Email').item.json.body_preview || '';\n  const previewTruncated = preview.length > 200 ? preview.substring(0, 200) + '...' : preview;\n  \n  let msg = `📧 Neue Email (${accountLabel})\\n`;\n  msg += `Von: ${fromName} <${fromAddr}>\\n`;\n  msg += `Betreff: ${subject}\\n`;\n  msg += `Kategorie: ${emoji} ${category} (${$json.priority})\\n`;\n  msg += `---\\n`;\n  msg += previewTruncated;\n  return msg;\n})() }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "format-telegram",
+      "name": "📝 Format Telegram Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 350]
+    },
+    {
+      "parameters": {
+        "chatId": "REPLACE_WITH_MARTIN_CHAT_ID",
+        "text": "={{ $json.telegram_message }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "send-telegram",
+      "name": "📱 Send Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1440, 350],
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_TELEGRAM_CREDENTIAL_ID",
+          "name": "Life Manager Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "📧 Business Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "🏢 Set Account: Business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📧 Family Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "👨‍👩‍👧 Set Account: Family",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🏢 Set Account: Business": {
+      "main": [
+        [
+          {
+            "node": "🤖 Classify Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "👨‍👩‍👧 Set Account: Family": {
+      "main": [
+        [
+          {
+            "node": "🤖 Classify Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Classify Email": {
+      "main": [
+        [
+          {
+            "node": "🔍 Should Notify?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Should Notify?": {
+      "main": [
+        [
+          {
+            "node": "📝 Format Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Format Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "📱 Send Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "life-manager"
+    }
+  ]
+}

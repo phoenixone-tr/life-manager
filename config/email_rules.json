@@ -1,0 +1,138 @@
+{
+  "version": "1.0",
+  "description": "Email classification rules for Tier 1 (keyword/rule-based). Will be replaced by Baserow config in future.",
+  "rules": [
+    {
+      "name": "server_alert",
+      "category": "server_alert",
+      "priority": "high",
+      "actions": ["notify_telegram"],
+      "description": "Server alerts, monitoring notifications, backup reports",
+      "conditions": {
+        "match_type": "any",
+        "rules": [
+          {
+            "field": "from_address",
+            "operator": "contains_any",
+            "values": ["noreply@proxmox", "root@", "cron-daemon", "logwatch", "fail2ban", "unattended-upgrades", "monitoring@", "alert@", "pbs@"]
+          },
+          {
+            "field": "subject",
+            "operator": "contains_any",
+            "values": ["alert", "warning", "error", "backup", "disk space", "CPU usage", "memory usage", "service down", "certificate expir"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "invoice",
+      "category": "invoice",
+      "priority": "medium",
+      "actions": ["notify_telegram"],
+      "description": "Invoices, bills, payment confirmations",
+      "conditions": {
+        "match_type": "any",
+        "rules": [
+          {
+            "field": "subject",
+            "operator": "contains_any",
+            "values": ["Rechnung", "Invoice", "Zahlung", "Payment", "Quittung", "Receipt", "Abbuchung", "Lastschrift", "Kontoauszug", "Billing"]
+          },
+          {
+            "field": "body_preview",
+            "operator": "contains_any",
+            "values": ["Rechnung im Anhang", "invoice attached", "Zahlungseingang", "payment received", "Ihre Rechnung"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "newsletter",
+      "category": "newsletter",
+      "priority": "low",
+      "actions": ["skip"],
+      "description": "Newsletters, marketing emails, automated notifications",
+      "conditions": {
+        "match_type": "any",
+        "rules": [
+          {
+            "field": "from_address",
+            "operator": "contains_any",
+            "values": ["newsletter@", "noreply@", "no-reply@", "marketing@", "news@", "digest@", "updates@", "info@", "notification@"]
+          },
+          {
+            "field": "subject",
+            "operator": "contains_any",
+            "values": ["Newsletter", "Abmelden", "Unsubscribe", "Weekly digest", "Monthly update", "abbestellen"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "spam_suspect",
+      "category": "spam_suspect",
+      "priority": "low",
+      "actions": ["skip"],
+      "description": "Suspected spam, phishing, or unwanted commercial email",
+      "conditions": {
+        "match_type": "any",
+        "rules": [
+          {
+            "field": "subject",
+            "operator": "contains_any",
+            "values": ["Gewinn", "Lottery", "Winner", "FREE", "Congratulations", "Dringend", "Urgent action", "Verify your account", "Konto gesperrt", "Account suspended", "Click here"]
+          },
+          {
+            "field": "body_preview",
+            "operator": "contains_any",
+            "values": ["Click here to claim", "limited time offer", "act now", "Klicken Sie hier", "Ihr Konto wird gesperrt"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "client_inquiry_business",
+      "category": "client_inquiry",
+      "priority": "high",
+      "actions": ["notify_telegram"],
+      "description": "Business inquiries from potential or existing clients (business account only)",
+      "conditions": {
+        "match_type": "all",
+        "rules": [
+          {
+            "field": "account",
+            "operator": "equals",
+            "values": ["business"]
+          },
+          {
+            "field": "from_address",
+            "operator": "not_contains_any",
+            "values": ["noreply@", "no-reply@", "newsletter@", "marketing@", "notification@", "mailer-daemon@"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "personal_family",
+      "category": "personal",
+      "priority": "medium",
+      "actions": ["notify_telegram"],
+      "description": "Personal emails on the family account (catch-all for family)",
+      "conditions": {
+        "match_type": "all",
+        "rules": [
+          {
+            "field": "account",
+            "operator": "equals",
+            "values": ["family"]
+          },
+          {
+            "field": "from_address",
+            "operator": "not_contains_any",
+            "values": ["noreply@", "no-reply@", "newsletter@", "marketing@", "notification@", "mailer-daemon@"]
+          }
+        ]
+      }
+    }
+  ]
+}
